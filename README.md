@@ -32,5 +32,13 @@ jooqDockerGenerate {
 }
 ```
 
+To apply plugin set:
+
+```groovy
+plugins {
+    id "ru.rorlov.jooq-docker-codegen" version "1.0.0"
+}
+```
+
 To run call
 `./gradlew jooqDockerGenerate`
