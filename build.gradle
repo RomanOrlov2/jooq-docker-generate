@@ -1,0 +1,60 @@
+plugins {
+    id 'groovy-gradle-plugin'
+    id 'com.gradle.plugin-publish' version "1.2.1"
+    id 'maven-publish'
+}
+
+ext.getProp = { envvar, name, dflt -> System.getenv(envvar) == null ? (project.hasProperty(name) ? project.property(name) : dflt) : System.getenv(envvar) }
+
+group 'ru.rorlov'
+version getProp("GROOVY_PLUGIN_VERSION", "groovyPluginVersion", "0.0.0-SNAPSHOT")
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.groovy:groovy:4.0.14'
+    implementation 'org.jooq:jooq-codegen:3.14.16'
+    implementation platform('org.testcontainers:testcontainers-bom:1.17.6')
+    implementation "org.testcontainers:testcontainers"
+    implementation 'org.testcontainers:postgresql'
+    implementation 'org.liquibase:liquibase-core:4.20.0'
+    implementation 'org.postgresql:postgresql:42.5.4'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+}
+
+gradlePlugin {
+    plugins {
+        GeneratorPlugin {
+            id = "ru.rorlov.jooq-docker-codegen"
+            implementationClass = "ru.rorlov.JooqGeneratePlugin"
+        }
+    }
+}
+
+publishing {
+    publications {
+        library(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url getProp("SERVICES_REPO_URL", "servicesRepoUrl", "https://gitlab.tech.ru/api/v4/projects/2/packages/maven")
+            credentials(HttpHeaderCredentials) {
+                name = getProp("SERVICES_REPO_USER", "servicesRepoUser", "Private-Token")
+                value = getProp("SERVICES_REPO_PASSWORD", "servicesRepoPassword", "")
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
